@@ -24,36 +24,46 @@ with open("dataconfig.json") as f:
     _configs.update(json.loads(f.read()))
 _phantomjs_path = _configs['phantomjs_path']
 _script_path = _configs['script_path']
-_bili_headers = {
-    'Connection': 'keep-alive', 
-    'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4,ja;q=0.2',
-    'Host': 'interface.bilibili.com',
-    'Accept-Encoding': 'gzip, deflate, sdch, br',
-    'Upgrade-Insecure-Requests': '1', 
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36', 
-    'Cache-Control': 'max-age=0'
-    }
-def _get_har_with_phantomjs(url):
-    cmd = '"{2}" {0} "{1}"'.format(_script_path, url, _phantomjs_path)
-    stdout, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
-    # stdout = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=False).stdout.readlines()
-    har = stdout.decode('utf8')
-    return json.loads(har[har.find("{"):])
 
-def get_download_info(url):
-    infos = {}
-    harjs = _get_har_with_phantomjs(url)
-    page = harjs['log']['pages'][0]
-    infos['title'] = page['title']
-    d_info_url = None
-    for entry in harjs['log']['entries']:
-        if entry['request']['url'].find('playurl') != -1:
-            d_info_url = entry['request']['url']
-            break
-    r = requests.get(d_info_url, headers=_bili_headers)
+_headers = {
+    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
+}
+
+def _get_url_with_phantomjs(url, redirect = None):
+    cmd = '"{2}" {0} "{1}"'.format(_script_path, url, _phantomjs_path)
+    # stdout, _ = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+    stdout, stderr = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE , shell=True).communicate()
+    phantomout = stdout.decode('utf8')
+    if redirect != None:
+        with open(redirect, 'w', encoding='utf8') as f:
+            f.write(phantomout)
+    foundsub = phantomout[phantomout.find("Target found: "):]
+    return foundsub[14:foundsub.find('\r\n')]
+
+def _decode_url(url):
+    host, paramstr = url.split("?")
+    params = paramstr.split("&")
+    ps = {}
+    for param in params:
+        k,v = param.split("=")
+        ps[k]=v
+    return (host,ps)
+
+
+def get_download_info(url, redirect = None):
+    d_info_url = _get_url_with_phantomjs(url, redirect)
+    print("[{0}]".format(d_info_url))
+    if d_info_url == "": return {}
+    host, params = _decode_url(d_info_url)
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "Accept-Encoding": "gzip, deflate, sdch, br",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
+    }
+    # r = requests.get(host, params = params, headers= _headers)
+    r = requests.get(d_info_url, headers = headers)
     if r.status_code != 200: r.raise_for_status()
-    d_info = json.loads(r.text)
-    infos['format'] = d_info['format']
-    infos['timelength'] = d_info['timelength']
-    infos['durl'] = d_info['durl']
-    return infos
+    return r.json()
