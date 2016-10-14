@@ -10,6 +10,8 @@ Currently it has only achived the bare minimum to retrieve video download links.
 ##Example
 ```python
 import papapabili
-infos = papapabili.get_download_info("http://www.bilibili.com/video/av1762101")
-print(infos)
+import json
+infos = papapabili.get_download_info(r"http://bangumi.bilibili.com/anime/v/63669")
+print(json.dumps(infos, indent = 2))
+papapabili.download(infos,dir="./temp", workers = 4)
 ```

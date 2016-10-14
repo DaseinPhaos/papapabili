@@ -55,11 +55,15 @@ if (system.args.length === 1) {
             console.log("Target found: " + rurl);
             // page.render("./temp/beforeexit.png");
             page.found = true;
-            phantom.exit();
+            // phantom.exit();
         }
     };
 
     page.open(page.address, function (status) {
+        var title = page.evaluate(function() {
+            return document.title;
+        });
+        console.log("Title: "+title);
         var checkCount = 0;
         function checkReadyState() {
             setTimeout(function() {
