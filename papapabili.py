@@ -56,7 +56,7 @@ def _get_url_with_phantomjs(url, redirect = None):
 
 def get_download_info(url):
     title, d_info_url = _get_url_with_phantomjs(url)
-    # print("[{0}]".format(d_info_url))
+    print("[{0}]".format(d_info_url))
     if d_info_url == "": return {}
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -68,7 +68,9 @@ def get_download_info(url):
     }
     r = requests.get(d_info_url, headers = headers)
     if r.status_code != 200: r.raise_for_status()
-    result = r.json()
+    # result = r.json()
+    result = r.text[r.text.find("{"):r.text.rfind("}")+1]
+    result = json.loads(result)
     result.update({"title": title})
     return result
 
