@@ -37,7 +37,7 @@ _phantomjs_path = _configs['phantomjs_path']
 _script_path = _configs['script_path']
 
 _headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36" # "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
 }
 
 def _get_url_with_phantomjs(url, redirect = None):
@@ -56,7 +56,7 @@ def _get_url_with_phantomjs(url, redirect = None):
 
 def get_download_info(url):
     title, d_info_url = _get_url_with_phantomjs(url)
-    print("[{0}]".format(d_info_url))
+    # print("[{0}]".format(d_info_url))
     if d_info_url == "": return {}
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -64,7 +64,7 @@ def get_download_info(url):
         "Connection": "keep-alive",
         "Accept-Encoding": "gzip, deflate, sdch, br",
         "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36" # "Mozilla/5.0 (Linux; Android 6.0.1; SHV36 Build/S7150; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/50.0.2661.86 Mobile Safari/537.36"
     }
     r = requests.get(d_info_url, headers = headers)
     if r.status_code != 200: r.raise_for_status()
@@ -80,6 +80,7 @@ def _start_download(dinfo, relative_path, format):
         size = dinfo['size']
         chunk_c = 0
         print("Chunk#{0} downloading started...".format(order))
+        # _continue_header = {'Range': 'bytes={0}-'.format(bytes_downloaded)}
         r = requests.get(dinfo['url'], stream=True)
         with open("{0}/{1}.{2}".format(relative_path, dinfo['order'], format), 'wb') as f:
             next_status = 0.01
@@ -94,7 +95,7 @@ def _start_download(dinfo, relative_path, format):
         return False
     return True
 
-def download(download_infos, dir="", workers = 2):
+def download(download_infos, dir=".", workers = 2):
     title = download_infos["title"]
     for c in _invalid_filename_characters:
         title = title.replace(c, ' ')
